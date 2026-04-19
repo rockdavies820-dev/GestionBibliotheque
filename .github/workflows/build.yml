@@ -14,13 +14,14 @@ jobs:
           java-version: '17'
           distribution: 'microsoft'
       - name: Build Windows Installer
+        shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path out
-          Get-ChildItem -Path src -Recurse -Filter "*.java" | ForEach-Object { $_.FullName } | Out-File sources.txt
-          javac -cp "src;C:\hostedtoolcache\windows\Java_Microsoft_jdk\17*\x64\lib\*" @sources.txt -d out
+          $files = Get-ChildItem -Path src -Recurse -Filter "*.java" | Select-Object -ExpandProperty FullName
+          $files | Out-File -FilePath sources.txt -Encoding utf8
+          javac -d out (Get-Content sources.txt)
           jar --create --file out/app.jar --main-class MainApp -C out .
           jpackage --input out --main-jar app.jar --name GestionBibliotheque --type msi --dest installer
-        shell: pwsh
 
   build-linux:
     runs-on: ubuntu-latest
@@ -34,7 +35,7 @@ jobs:
         run: |
           mkdir -p out
           find src -name "*.java" > sources.txt
-          javac @sources.txt -d out
+          javac -d out $(cat sources.txt)
           jar --create --file out/app.jar --main-class MainApp -C out .
           jpackage --input out --main-jar app.jar --name GestionBibliotheque --type deb --dest installer
 
@@ -50,6 +51,6 @@ jobs:
         run: |
           mkdir -p out
           find src -name "*.java" > sources.txt
-          javac @sources.txt -d out
+          javac -d out $(cat sources.txt)
           jar --create --file out/app.jar --main-class MainApp -C out .
           jpackage --input out --main-jar app.jar --name GestionBibliotheque --type dmg --dest installer
