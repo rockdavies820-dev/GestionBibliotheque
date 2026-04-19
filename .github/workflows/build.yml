@@ -18,13 +18,20 @@ jobs:
         run: |
           Invoke-WebRequest -Uri "https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_windows-x64_bin-sdk.zip" -OutFile "javafx.zip"
           Expand-Archive -Path javafx.zip -DestinationPath .
+      - name: Download iText
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path libs
+          Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/com/itextpdf/itextpdf/5.5.13.3/itextpdf-5.5.13.3.jar" -OutFile "libs/itextpdf.jar"
       - name: Build Windows Installer
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path out
           $fx = "javafx-sdk-17.0.2\lib"
+          $cp = "libs\itextpdf.jar"
           $files = Get-ChildItem -Path src -Recurse -Filter "*.java" | Select-Object -ExpandProperty FullName
-          javac --module-path $fx --add-modules javafx.controls,javafx.fxml -d out $files
+          javac --module-path $fx --add-modules javafx.controls,javafx.fxml -cp $cp -d out $files
+          Copy-Item $cp out\
           jar --create --file out/app.jar --main-class MainApp -C out .
           jpackage --input out --main-jar app.jar --name GestionBibliotheque --type msi --dest installer
 
@@ -40,12 +47,18 @@ jobs:
         run: |
           wget -q https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_linux-x64_bin-sdk.zip
           unzip -q openjfx-17.0.2_linux-x64_bin-sdk.zip
+      - name: Download iText
+        run: |
+          mkdir -p libs
+          wget -q https://repo1.maven.org/maven2/com/itextpdf/itextpdf/5.5.13.3/itextpdf-5.5.13.3.jar -O libs/itextpdf.jar
       - name: Build Linux Installer
         run: |
           mkdir -p out
           FX="javafx-sdk-17.0.2/lib"
+          CP="libs/itextpdf.jar"
           find src -name "*.java" > sources.txt
-          javac --module-path $FX --add-modules javafx.controls,javafx.fxml -d out $(cat sources.txt)
+          javac --module-path $FX --add-modules javafx.controls,javafx.fxml -cp $CP -d out $(cat sources.txt)
+          cp $CP out/
           jar --create --file out/app.jar --main-class MainApp -C out .
           jpackage --input out --main-jar app.jar --name GestionBibliotheque --type deb --dest installer
 
@@ -61,11 +74,17 @@ jobs:
         run: |
           wget -q https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_osx-x64_bin-sdk.zip
           unzip -q openjfx-17.0.2_osx-x64_bin-sdk.zip
+      - name: Download iText
+        run: |
+          mkdir -p libs
+          wget -q https://repo1.maven.org/maven2/com/itextpdf/itextpdf/5.5.13.3/itextpdf-5.5.13.3.jar -O libs/itextpdf.jar
       - name: Build Mac Installer
         run: |
           mkdir -p out
           FX="javafx-sdk-17.0.2/lib"
+          CP="libs/itextpdf.jar"
           find src -name "*.java" > sources.txt
-          javac --module-path $FX --add-modules javafx.controls,javafx.fxml -d out $(cat sources.txt)
+          javac --module-path $FX --add-modules javafx.controls,javafx.fxml -cp $CP -d out $(cat sources.txt)
+          cp $CP out/
           jar --create --file out/app.jar --main-class MainApp -C out .
           jpackage --input out --main-jar app.jar --name GestionBibliotheque --type dmg --dest installer
