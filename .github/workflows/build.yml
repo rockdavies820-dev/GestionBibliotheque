@@ -32,6 +32,11 @@ jobs:
           Copy-Item libs\itextpdf.jar out\
           jar --create --file out/app.jar --main-class MainApp -C out .
           jpackage --input out --main-jar app.jar --name GestionBibliotheque --type msi --dest installer
+      - name: Upload Windows Installer
+        uses: actions/upload-artifact@v3
+        with:
+          name: Windows-Installer
+          path: installer/
 
   build-linux:
     runs-on: ubuntu-latest
@@ -58,6 +63,11 @@ jobs:
           cp libs/itextpdf.jar out/
           jar --create --file out/app.jar --main-class MainApp -C out .
           jpackage --input out --main-jar app.jar --name GestionBibliotheque --type deb --dest installer
+      - name: Upload Linux Installer
+        uses: actions/upload-artifact@v3
+        with:
+          name: Linux-Installer
+          path: installer/
 
   build-mac:
     runs-on: macos-latest
@@ -84,3 +94,8 @@ jobs:
           cp libs/itextpdf.jar out/
           jar --create --file out/app.jar --main-class MainApp -C out .
           jpackage --input out --main-jar app.jar --name GestionBibliotheque --type dmg --dest installer
+      - name: Upload Mac Installer
+        uses: actions/upload-artifact@v3
+        with:
+          name: Mac-Installer
+          path: installer/
