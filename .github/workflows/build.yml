@@ -15,9 +15,12 @@ jobs:
           distribution: 'microsoft'
       - name: Build Windows Installer
         run: |
-          javac -cp "src;libs/*" src/*.java src/**/*.java -d out
-          jar --create --file app.jar --main-class MainApp -C out .
-          jpackage --input . --main-jar app.jar --name GestionBibliotheque --type msi
+          New-Item -ItemType Directory -Force -Path out
+          Get-ChildItem -Path src -Recurse -Filter "*.java" | ForEach-Object { $_.FullName } | Out-File sources.txt
+          javac -cp "src;C:\hostedtoolcache\windows\Java_Microsoft_jdk\17*\x64\lib\*" @sources.txt -d out
+          jar --create --file out/app.jar --main-class MainApp -C out .
+          jpackage --input out --main-jar app.jar --name GestionBibliotheque --type msi --dest installer
+        shell: pwsh
 
   build-linux:
     runs-on: ubuntu-latest
@@ -29,9 +32,11 @@ jobs:
           distribution: 'microsoft'
       - name: Build Linux Installer
         run: |
-          javac -cp "src:libs/*" src/*.java src/**/*.java -d out
-          jar --create --file app.jar --main-class MainApp -C out .
-          jpackage --input . --main-jar app.jar --name GestionBibliotheque --type deb
+          mkdir -p out
+          find src -name "*.java" > sources.txt
+          javac @sources.txt -d out
+          jar --create --file out/app.jar --main-class MainApp -C out .
+          jpackage --input out --main-jar app.jar --name GestionBibliotheque --type deb --dest installer
 
   build-mac:
     runs-on: macos-latest
@@ -43,6 +48,8 @@ jobs:
           distribution: 'microsoft'
       - name: Build Mac Installer
         run: |
-          javac -cp "src:libs/*" src/*.java src/**/*.java -d out
-          jar --create --file app.jar --main-class MainApp -C out .
-          jpackage --input . --main-jar app.jar --name GestionBibliotheque --type dmg
+          mkdir -p out
+          find src -name "*.java" > sources.txt
+          javac @sources.txt -d out
+          jar --create --file out/app.jar --main-class MainApp -C out .
+          jpackage --input out --main-jar app.jar --name GestionBibliotheque --type dmg --dest installer
