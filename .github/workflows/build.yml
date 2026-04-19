@@ -13,13 +13,18 @@ jobs:
         with:
           java-version: '17'
           distribution: 'microsoft'
+      - name: Download JavaFX
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_windows-x64_bin-sdk.zip" -OutFile "javafx.zip"
+          Expand-Archive -Path javafx.zip -DestinationPath .
       - name: Build Windows Installer
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path out
+          $fx = "javafx-sdk-17.0.2\lib"
           $files = Get-ChildItem -Path src -Recurse -Filter "*.java" | Select-Object -ExpandProperty FullName
-          $files | Out-File -FilePath sources.txt -Encoding utf8
-          javac -d out (Get-Content sources.txt)
+          javac --module-path $fx --add-modules javafx.controls,javafx.fxml -d out $files
           jar --create --file out/app.jar --main-class MainApp -C out .
           jpackage --input out --main-jar app.jar --name GestionBibliotheque --type msi --dest installer
 
@@ -30,13 +35,17 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           java-version: '17'
-          distribution: 'liberica'
-          java-package: 'jdk+fx'
+          distribution: 'temurin'
+      - name: Download JavaFX
+        run: |
+          wget -q https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_linux-x64_bin-sdk.zip
+          unzip -q openjfx-17.0.2_linux-x64_bin-sdk.zip
       - name: Build Linux Installer
         run: |
           mkdir -p out
+          FX="javafx-sdk-17.0.2/lib"
           find src -name "*.java" > sources.txt
-          javac -d out $(cat sources.txt)
+          javac --module-path $FX --add-modules javafx.controls,javafx.fxml -d out $(cat sources.txt)
           jar --create --file out/app.jar --main-class MainApp -C out .
           jpackage --input out --main-jar app.jar --name GestionBibliotheque --type deb --dest installer
 
@@ -47,12 +56,16 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           java-version: '17'
-          distribution: 'liberica'
-          java-package: 'jdk+fx'
+          distribution: 'temurin'
+      - name: Download JavaFX
+        run: |
+          wget -q https://download2.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_osx-x64_bin-sdk.zip
+          unzip -q openjfx-17.0.2_osx-x64_bin-sdk.zip
       - name: Build Mac Installer
         run: |
           mkdir -p out
+          FX="javafx-sdk-17.0.2/lib"
           find src -name "*.java" > sources.txt
-          javac -d out $(cat sources.txt)
+          javac --module-path $FX --add-modules javafx.controls,javafx.fxml -d out $(cat sources.txt)
           jar --create --file out/app.jar --main-class MainApp -C out .
           jpackage --input out --main-jar app.jar --name GestionBibliotheque --type dmg --dest installer
