@@ -1,9 +1,7 @@
-name: Build Installers
-
+﻿name: Build Installers
 on:
   push:
     branches: [ main ]
-
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -23,4 +21,16 @@ jobs:
       - name: Build Windows Installer
         shell: pwsh
         run: |
-          New-
+          New-Item -ItemType Directory -Force -Path dist
+          $javafx = "javafx-sdk-17.0.2\lib"
+          $libs = "libs\itextpdf.jar"
+          $sources = Get-ChildItem -Recurse -Filter "*.java" src | Select-Object -ExpandProperty FullName
+          $sources | Out-File -FilePath sources.txt -Encoding UTF8
+          javac --module-path $javafx --add-modules javafx.controls,javafx.fxml -cp $libs -d out @sources.txt
+          jar --create --file dist/GestionBibliotheque.jar --main-class=Main -C out .
+          jpackage --input dist --name GestionBibliotheque --main-jar GestionBibliotheque.jar --type exe --module-path $javafx --add-modules javafx.controls,javafx.fxml --win-dir-chooser --win-shortcut --dest installer
+      - name: Upload installer
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: installer/
