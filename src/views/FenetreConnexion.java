@@ -21,21 +21,21 @@ public class FenetreConnexion {
 
     // PAGE 1 — Accueil
     private void afficherAccueil(Stage stage) {
-        stage.setTitle("Gestion Bibliothèque");
+        stage.setTitle("Gestion Bibliotheque");
 
-        Text titre = new Text("Gestion Bibliothèque");
+        Text titre = new Text("Gestion Bibliotheque");
         titre.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         titre.setFill(Color.DARKBLUE);
 
-        Text sousTitre = new Text("Système de gestion de bibliothèque scolaire");
+        Text sousTitre = new Text("Systeme de gestion de bibliotheque scolaire");
         sousTitre.setFont(Font.font("Arial", 14));
         sousTitre.setFill(Color.GRAY);
 
-        Button btnInscrire = new Button("📝 S'inscrire");
+        Button btnInscrire = new Button("S'inscrire");
         btnInscrire.setStyle("-fx-background-color: darkblue; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 30;");
         btnInscrire.setPrefWidth(200);
 
-        Button btnConnecter = new Button("🔑 Se connecter");
+        Button btnConnecter = new Button("Se connecter");
         btnConnecter.setStyle("-fx-background-color: white; -fx-text-fill: darkblue; -fx-font-size: 14px; -fx-padding: 10 30; -fx-border-color: darkblue; -fx-border-width: 2;");
         btnConnecter.setPrefWidth(200);
 
@@ -53,20 +53,20 @@ public class FenetreConnexion {
 
     // PAGE 2 — Inscription
     private void afficherInscription(Stage stage) {
-        stage.setTitle("Inscription - Gestion Bibliothèque");
+        stage.setTitle("Inscription - Gestion Bibliotheque");
 
         Text titre = new Text("Inscription");
         titre.setFont(Font.font("Arial", FontWeight.BOLD, 22));
         titre.setFill(Color.DARKBLUE);
 
-        Text sousTitre = new Text("Créez les comptes de votre établissement");
+        Text sousTitre = new Text("Creez les comptes de votre etablissement");
         sousTitre.setFont(Font.font("Arial", 13));
         sousTitre.setFill(Color.GRAY);
 
-        // Choix établissement
+        // Choix etablissement
         ToggleGroup groupEtab = new ToggleGroup();
-        RadioButton rbEcole = new RadioButton("🏫 École");
-        RadioButton rbAutre = new RadioButton("🏢 Autre établissement");
+        RadioButton rbEcole = new RadioButton("Ecole");
+        RadioButton rbAutre = new RadioButton("Autre etablissement");
         rbEcole.setToggleGroup(groupEtab);
         rbAutre.setToggleGroup(groupEtab);
         HBox hboxEtab = new HBox(20, rbEcole, rbAutre);
@@ -78,9 +78,9 @@ public class FenetreConnexion {
         grid.setVgap(15);
         grid.setPadding(new Insets(20));
 
-        Label lblNom = new Label("Nom établissement :");
+        Label lblNom = new Label("Nom etablissement :");
         TextField txtNom = new TextField();
-        txtNom.setPromptText("ex: Lycée Victor Hugo");
+        txtNom.setPromptText("ex: Lycee Victor Hugo");
         txtNom.setPrefWidth(200);
 
         Label lblAdmin = new Label("Mot de passe Admin :");
@@ -88,7 +88,7 @@ public class FenetreConnexion {
         txtAdmin.setPromptText("Choisir un mot de passe");
         txtAdmin.setPrefWidth(200);
 
-        Label lblBiblio = new Label("Mot de passe Bibliothécaire :");
+        Label lblBiblio = new Label("Mot de passe Bibliothecaire :");
         PasswordField txtBiblio = new PasswordField();
         txtBiblio.setPromptText("Choisir un mot de passe");
         txtBiblio.setPrefWidth(200);
@@ -99,7 +99,7 @@ public class FenetreConnexion {
         Button btnInscrire = new Button("S'inscrire");
         btnInscrire.setStyle("-fx-background-color: darkblue; -fx-text-fill: white; -fx-font-size: 13px; -fx-padding: 8 20;");
 
-        Button btnRetour = new Button("← Retour");
+        Button btnRetour = new Button("Retour");
         btnRetour.setStyle("-fx-background-color: gray; -fx-text-fill: white;");
         btnRetour.setOnAction(e -> afficherAccueil(stage));
 
@@ -115,11 +115,11 @@ public class FenetreConnexion {
         btnInscrire.setOnAction(e -> {
             if (groupEtab.getSelectedToggle() == null) {
                 lblMessage.setTextFill(Color.RED);
-                lblMessage.setText("Veuillez choisir un type d'établissement !");
+                lblMessage.setText("Veuillez choisir un type d'etablissement !");
                 return;
             }
             String nom = txtNom.getText().trim();
-            String type = rbEcole.isSelected() ? "École" : "Autre";
+            String type = rbEcole.isSelected() ? "Ecole" : "Autre";
             String passAdmin = txtAdmin.getText().trim();
             String passBiblio = txtBiblio.getText().trim();
 
@@ -132,18 +132,17 @@ public class FenetreConnexion {
             try {
                 int etabId = ConnexionDB.inscrireEtablissement(nom, type, passAdmin, passBiblio);
                 lblMessage.setTextFill(Color.GREEN);
-                lblMessage.setText("Inscription réussie ! ID: " + etabId);
+                lblMessage.setText("Inscription reussie ! ID: " + etabId);
 
-                // Afficher les identifiants créés
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Inscription réussie !");
+                alert.setTitle("Inscription reussie !");
                 alert.setHeaderText("Vos identifiants de connexion :");
                 alert.setContentText(
                         "Login Admin : admin_" + etabId + "\n" +
                                 "Mot de passe Admin : " + passAdmin + "\n\n" +
-                                "Login Bibliothécaire : biblio_" + etabId + "\n" +
-                                "Mot de passe Bibliothécaire : " + passBiblio + "\n\n" +
-                                "⚠️ Notez bien ces identifiants !"
+                                "Login Bibliothecaire : biblio_" + etabId + "\n" +
+                                "Mot de passe Bibliothecaire : " + passBiblio + "\n\n" +
+                                "Notez bien ces identifiants !"
                 );
                 alert.showAndWait();
                 afficherConnexion(stage);
@@ -165,7 +164,7 @@ public class FenetreConnexion {
 
     // PAGE 3 — Connexion
     private void afficherConnexion(Stage stage) {
-        stage.setTitle("Connexion - Gestion Bibliothèque");
+        stage.setTitle("Connexion - Gestion Bibliotheque");
 
         Text titre = new Text("Connexion");
         titre.setFont(Font.font("Arial", FontWeight.BOLD, 22));
@@ -196,7 +195,7 @@ public class FenetreConnexion {
         Button btnConnexion = new Button("Se connecter");
         btnConnexion.setStyle("-fx-background-color: darkblue; -fx-text-fill: white; -fx-font-size: 13px; -fx-padding: 8 20;");
 
-        Button btnRetour = new Button("← Retour");
+        Button btnRetour = new Button("Retour");
         btnRetour.setStyle("-fx-background-color: gray; -fx-text-fill: white;");
         btnRetour.setOnAction(e -> afficherAccueil(stage));
 
@@ -221,7 +220,7 @@ public class FenetreConnexion {
                 String role = ConnexionDB.verifierUtilisateur(login, pass);
                 if (role != null) {
                     lblMessage.setTextFill(Color.GREEN);
-                    lblMessage.setText("Connexion réussie !");
+                    lblMessage.setText("Connexion reussie !");
                     if (role.equals("admin")) {
                         new FenetreMenuAdmin().afficher(stage);
                     } else {

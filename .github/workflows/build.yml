@@ -26,11 +26,11 @@ jobs:
           $sources = Get-ChildItem -Recurse -Filter "*.java" -Path src | Select-Object -ExpandProperty FullName
           Write-Host "=== Sources ==="
           $sources
-          javac --module-path $javafxLibs --add-modules javafx.controls,javafx.fxml -cp $cp -d out $sources
+          javac -encoding UTF-8 --module-path $javafxLibs --add-modules javafx.controls,javafx.fxml -cp $cp -d out $sources
           Write-Host "=== Classes dans out ==="
           Get-ChildItem -Recurse out -Filter "*.class"
           if ((Get-ChildItem -Recurse out -Filter "*.class").Count -eq 0) {
-            Write-Error "ERREUR: Aucune classe compilée!"
+            Write-Error "ERREUR: Aucune classe compilee!"
             exit 1
           }
           Copy-Item src/favicon.ico out/favicon.ico
