@@ -29,7 +29,9 @@ jobs:
           jar --create --file dist/GestionBibliotheque.jar --main-class=MainApp -C out .
           Copy-Item libs/itextpdf.jar dist/itextpdf.jar
           Copy-Item libs/sqlite.jar dist/sqlite.jar
-          jpackage --input dist --name GestionBibliotheque --main-jar GestionBibliotheque.jar --type exe --win-dir-chooser --win-shortcut --icon src/favicon.ico --java-options "-Dfile.encoding=UTF-8" --dest installer
+          $jmodsPath = "$javaHome\jmods"
+          jlink --module-path "$jmodsPath" --add-modules java.base,java.desktop,java.logging,java.sql,java.naming,java.xml,javafx.controls,javafx.fxml --output runtime-image --strip-debug --compress 2 --no-header-files --no-man-pages
+          jpackage --input dist --name GestionBibliotheque --main-jar GestionBibliotheque.jar --type exe --runtime-image runtime-image --win-dir-chooser --win-shortcut --icon src/favicon.ico --java-options "-Dfile.encoding=UTF-8" --dest installer
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
