@@ -10,12 +10,14 @@ public class MainApp extends Application {
         // Vérifier les mises à jour
         UpdateChecker.verifier();
 
+        // Icône depuis les ressources
         try {
-            Image icon = new Image("file:C:/Users/rockd/IdeaProjects/GestionBibliotheque/GestionBibliotheque/src/icon.png");
+            Image icon = new Image(MainApp.class.getResourceAsStream("/favicon.ico"));
             primaryStage.getIcons().add(icon);
         } catch (Exception e) {
             System.out.println("Icône non chargée : " + e.getMessage());
         }
+
         primaryStage.setTitle("Gestion Bibliothèque");
         FenetreConnexion connexion = new FenetreConnexion();
         connexion.afficher(primaryStage);
