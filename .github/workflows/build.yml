@@ -14,22 +14,24 @@ jobs:
       - name: Download JavaFX and iText
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.2%2B8/OpenJDK17U-jdk_x64_windows_hotspot_17.0.2_8.zip" -OutFile jdk.zip
-          Invoke-WebRequest -Uri "https://download3.gluonhq.com/openjfx/17.0.2/openjfx-17.0.2_windows-x64_bin-sdk.zip" -OutFile javafx.zip
-          Expand-Archive -Path javafx.zip -DestinationPath .
           New-Item -ItemType Directory -Force -Path libs
+          New-Item -ItemType Directory -Force -Path javafx-libs
+          Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/openjfx/javafx-controls/17.0.2/javafx-controls-17.0.2-win.jar" -OutFile javafx-libs/javafx-controls.jar
+          Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/openjfx/javafx-fxml/17.0.2/javafx-fxml-17.0.2-win.jar" -OutFile javafx-libs/javafx-fxml.jar
+          Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/openjfx/javafx-base/17.0.2/javafx-base-17.0.2-win.jar" -OutFile javafx-libs/javafx-base.jar
+          Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/openjfx/javafx-graphics/17.0.2/javafx-graphics-17.0.2-win.jar" -OutFile javafx-libs/javafx-graphics.jar
           Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/com/itextpdf/itextpdf/5.5.13.3/itextpdf-5.5.13.3.jar" -OutFile libs/itextpdf.jar
       - name: Build Windows Installer
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist
           New-Item -ItemType Directory -Force -Path out
-          $javafx = "javafx-sdk-17.0.2\lib"
-          $libs = "libs\itextpdf.jar"
+          $javafx = "javafx-libs\javafx-controls.jar;javafx-libs\javafx-fxml.jar;javafx-libs\javafx-base.jar;javafx-libs\javafx-graphics.jar"
+          $cp = "$javafx;libs\itextpdf.jar"
           $sources = Get-ChildItem -Recurse -Filter "*.java" -Path src | Select-Object -ExpandProperty FullName
-          javac --module-path $javafx --add-modules javafx.controls,javafx.fxml -cp $libs -d out $sources
+          javac --add-modules javafx.controls,javafx.fxml -cp $cp -d out $sources
           jar --create --file dist/GestionBibliotheque.jar --main-class=Main -C out .
-          jpackage --input dist --name GestionBibliotheque --main-jar GestionBibliotheque.jar --type exe --module-path $javafx --add-modules javafx.controls,javafx.fxml --win-dir-chooser --win-shortcut --dest installer
+          jpackage --input dist --name GestionBibliotheque --main-jar GestionBibliotheque.jar --type exe --win-dir-chooser --win-shortcut --dest installer
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
