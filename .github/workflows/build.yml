@@ -30,7 +30,7 @@ jobs:
           jar --create --file dist/GestionBibliotheque.jar --main-class=Main -C out .
           jpackage --input dist --name GestionBibliotheque --main-jar GestionBibliotheque.jar --type exe --module-path $javafx --add-modules javafx.controls,javafx.fxml --win-dir-chooser --win-shortcut --dest installer
       - name: Upload installer
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-installer
           path: installer/
