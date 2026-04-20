@@ -31,14 +31,12 @@ jobs:
           $sources = Get-ChildItem -Recurse -Filter "*.java" -Path src | Select-Object -ExpandProperty FullName
           javac --add-modules javafx.controls,javafx.fxml -cp $cp -d out $sources
           Copy-Item src/favicon.ico out/favicon.ico
-          Write-Host "=== Contenu de out ==="
-          Get-ChildItem -Recurse out
           jar --create --file dist/GestionBibliotheque.jar --main-class=MainApp -C out .
-          Write-Host "=== Taille du JAR ==="
-          Get-Item dist/GestionBibliotheque.jar | Select-Object Length
           Copy-Item libs/itextpdf.jar dist/itextpdf.jar
           Copy-Item javafx-libs/* dist/
-          jpackage --input dist --name GestionBibliotheque --main-jar GestionBibliotheque.jar --type exe --module-path javafx-libs --add-modules javafx.controls,javafx.fxml --win-dir-chooser --win-shortcut --icon src/favicon.ico --dest installer
+          $javaHome = $env:JAVA_HOME
+          jlink --module-path "$javaHome\jmods" --add-modules java.base,java.desktop,java.logging,java.sql,java.naming,java.xml,javafx.controls,javafx.fxml --output runtime-image
+          jpackage --input dist --name GestionBibliotheque --main-jar GestionBibliotheque.jar --type exe --runtime-image runtime-image --win-dir-chooser --win-shortcut --icon src/favicon.ico --dest installer
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
