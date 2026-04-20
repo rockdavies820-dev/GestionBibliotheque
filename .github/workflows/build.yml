@@ -11,31 +11,29 @@ jobs:
         with:
           java-version: '17'
           distribution: 'microsoft'
-      - name: Download JavaFX and iText
+      - name: Download JavaFX SDK complet
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path libs
-          New-Item -ItemType Directory -Force -Path javafx-libs
-          Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/openjfx/javafx-controls/17.0.2/javafx-controls-17.0.2-win.jar" -OutFile javafx-libs/javafx-controls.jar
-          Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/openjfx/javafx-fxml/17.0.2/javafx-fxml-17.0.2-win.jar" -OutFile javafx-libs/javafx-fxml.jar
-          Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/openjfx/javafx-base/17.0.2/javafx-base-17.0.2-win.jar" -OutFile javafx-libs/javafx-base.jar
-          Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/openjfx/javafx-graphics/17.0.2/javafx-graphics-17.0.2-win.jar" -OutFile javafx-libs/javafx-graphics.jar
           Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/com/itextpdf/itextpdf/5.5.13.3/itextpdf-5.5.13.3.jar" -OutFile libs/itextpdf.jar
+          Invoke-WebRequest -Uri "https://cdn.azul.com/zulu/bin/zulu17.56.15-ca-fx-jdk17.0.14-win_x64.zip" -OutFile javafx-jdk.zip
+          Expand-Archive -Path javafx-jdk.zip -DestinationPath javafx-jdk-extracted
+          $jdkFolder = Get-ChildItem javafx-jdk-extracted | Select-Object -First 1 -ExpandProperty FullName
+          Move-Item $jdkFolder javafx-jdk
       - name: Build Windows Installer
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist
           New-Item -ItemType Directory -Force -Path out
-          $javafx = "javafx-libs\javafx-controls.jar;javafx-libs\javafx-fxml.jar;javafx-libs\javafx-base.jar;javafx-libs\javafx-graphics.jar"
-          $cp = "$javafx;libs\itextpdf.jar"
+          $javafxLibs = "javafx-jdk\lib"
+          $cp = "$javafxLibs\javafx.controls.jar;$javafxLibs\javafx.fxml.jar;$javafxLibs\javafx.base.jar;$javafxLibs\javafx.graphics.jar;libs\itextpdf.jar"
           $sources = Get-ChildItem -Recurse -Filter "*.java" -Path src | Select-Object -ExpandProperty FullName
-          javac --add-modules javafx.controls,javafx.fxml -cp $cp -d out $sources
+          javac --module-path $javafxLibs --add-modules javafx.controls,javafx.fxml -cp $cp -d out $sources
           Copy-Item src/favicon.ico out/favicon.ico
           jar --create --file dist/GestionBibliotheque.jar --main-class=MainApp -C out .
           Copy-Item libs/itextpdf.jar dist/itextpdf.jar
-          Copy-Item javafx-libs/* dist/
           $javaHome = $env:JAVA_HOME
-          jlink --module-path "$javaHome\jmods" --add-modules java.base,java.desktop,java.logging,java.sql,java.naming,java.xml,javafx.controls,javafx.fxml --output runtime-image
+          jlink --module-path "$javaHome\jmods;javafx-jdk\jmods" --add-modules java.base,java.desktop,java.logging,java.sql,java.naming,java.xml,javafx.controls,javafx.fxml --output runtime-image
           jpackage --input dist --name GestionBibliotheque --main-jar GestionBibliotheque.jar --type exe --runtime-image runtime-image --win-dir-chooser --win-shortcut --icon src/favicon.ico --dest installer
       - name: Upload installer
         uses: actions/upload-artifact@v4
