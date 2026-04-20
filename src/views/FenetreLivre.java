@@ -20,7 +20,7 @@ public class FenetreLivre {
 
     private TableView<ObservableList<String>> table = new TableView<>();
 
-    public void afficher(Stage stage) {
+    public void afficher(Stage stage, String role) {
         stage.setTitle("Gestion des Livres");
 
         Text titre = new Text("Gestion des Livres");
@@ -63,7 +63,7 @@ public class FenetreLivre {
             txtCode.setDisable(false);
             try {
                 Connection conn = ConnexionDB.getConnection(null, null);
-                String sql = "INSERT INTO LIVRE VALUES (?, ?, ?, ?, ?)";
+                String sql = "INSERT INTO livre VALUES (?, ?, ?, ?, ?)";
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ps.setString(1, txtCode.getText());
                 ps.setString(2, txtTitre.getText());
@@ -90,7 +90,7 @@ public class FenetreLivre {
                     if (response == ButtonType.OK) {
                         try {
                             Connection conn = ConnexionDB.getConnection(null, null);
-                            String sql = "UPDATE LIVRE SET TITRE=?, AUTEUR=?, GENRE=?, PRIX=? WHERE CODE_LIV=?";
+                            String sql = "UPDATE livre SET titre=?, auteur=?, genre=?, prix=? WHERE code_liv=?";
                             PreparedStatement ps = conn.prepareStatement(sql);
                             ps.setString(1, txtTitre.getText());
                             ps.setString(2, txtAuteur.getText());
@@ -123,7 +123,7 @@ public class FenetreLivre {
                     if (response == ButtonType.OK) {
                         try {
                             Connection conn = ConnexionDB.getConnection(null, null);
-                            String sql = "DELETE FROM LIVRE WHERE CODE_LIV = ?";
+                            String sql = "DELETE FROM livre WHERE code_liv = ?";
                             PreparedStatement ps = conn.prepareStatement(sql);
                             ps.setString(1, selected.get(0));
                             ps.executeUpdate();
@@ -143,7 +143,11 @@ public class FenetreLivre {
 
         btnRetour.setOnAction(e -> {
             txtCode.setDisable(false);
-            new FenetreMenu().afficher(stage);
+            if (role.equals("admin")) {
+                new FenetreMenuAdmin().afficher(stage);
+            } else {
+                new FenetreMenuBibliothecaire().afficher(stage);
+            }
         });
 
         VBox vbox = new VBox(15, titre, formulaire, lblMessage, table, btnRetour);
@@ -164,7 +168,7 @@ public class FenetreLivre {
         table.getItems().clear();
         try {
             Connection conn = ConnexionDB.getConnection(null, null);
-            ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM LIVRE");
+            ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM livre");
             ResultSetMetaData meta = rs.getMetaData();
             int cols = meta.getColumnCount();
             for (int i = 1; i <= cols; i++) {

@@ -20,7 +20,7 @@ public class FenetreClasse {
 
     private TableView<ObservableList<String>> table = new TableView<>();
 
-    public void afficher(Stage stage) {
+    public void afficher(Stage stage, String role) {
         stage.setTitle("Gestion des Classes");
 
         Text titre = new Text("Gestion des Classes");
@@ -45,7 +45,6 @@ public class FenetreClasse {
 
         chargerDonnees();
 
-        // Clic sur une ligne → remplit le formulaire
         table.setOnMouseClicked(e -> {
             ObservableList<String> selected = table.getSelectionModel().getSelectedItem();
             if (selected != null) {
@@ -60,7 +59,7 @@ public class FenetreClasse {
             txtCode.setDisable(false);
             try {
                 Connection conn = ConnexionDB.getConnection(null, null);
-                String sql = "INSERT INTO CLASSE VALUES (?, ?, ?)";
+                String sql = "INSERT INTO classe VALUES (?, ?, ?)";
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ps.setString(1, txtCode.getText());
                 ps.setString(2, txtIntitule.getText());
@@ -85,7 +84,7 @@ public class FenetreClasse {
                     if (response == ButtonType.OK) {
                         try {
                             Connection conn = ConnexionDB.getConnection(null, null);
-                            String sql = "UPDATE CLASSE SET INTITULE=?, EFFECTIF=? WHERE CODE_CL=?";
+                            String sql = "UPDATE classe SET intitule=?, effectif=? WHERE code_cl=?";
                             PreparedStatement ps = conn.prepareStatement(sql);
                             ps.setString(1, txtIntitule.getText());
                             ps.setInt(2, Integer.parseInt(txtEffectif.getText()));
@@ -116,7 +115,7 @@ public class FenetreClasse {
                     if (response == ButtonType.OK) {
                         try {
                             Connection conn = ConnexionDB.getConnection(null, null);
-                            String sql = "DELETE FROM CLASSE WHERE CODE_CL = ?";
+                            String sql = "DELETE FROM classe WHERE code_cl = ?";
                             PreparedStatement ps = conn.prepareStatement(sql);
                             ps.setString(1, selected.get(0));
                             ps.executeUpdate();
@@ -136,7 +135,11 @@ public class FenetreClasse {
 
         btnRetour.setOnAction(e -> {
             txtCode.setDisable(false);
-            new FenetreMenu().afficher(stage);
+            if (role.equals("admin")) {
+                new FenetreMenuAdmin().afficher(stage);
+            } else {
+                new FenetreMenuBibliothecaire().afficher(stage);
+            }
         });
 
         VBox vbox = new VBox(15, titre, formulaire, lblMessage, table, btnRetour);
@@ -157,7 +160,7 @@ public class FenetreClasse {
         table.getItems().clear();
         try {
             Connection conn = ConnexionDB.getConnection(null, null);
-            ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM CLASSE");
+            ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM classe");
             ResultSetMetaData meta = rs.getMetaData();
             int cols = meta.getColumnCount();
             for (int i = 1; i <= cols; i++) {

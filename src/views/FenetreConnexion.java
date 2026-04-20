@@ -28,9 +28,9 @@ public class FenetreConnexion {
         grid.setVgap(10);
         grid.setPadding(new Insets(20));
 
-        Label lblUser = new Label("Utilisateur :");
+        Label lblUser = new Label("Login :");
         TextField txtUser = new TextField();
-        txtUser.setPromptText("ex: system");
+        txtUser.setPromptText("ex: admin");
 
         Label lblPass = new Label("Mot de passe :");
         PasswordField txtPass = new PasswordField();
@@ -49,15 +49,29 @@ public class FenetreConnexion {
         grid.add(lblMessage, 1, 3);
 
         btnConnexion.setOnAction(e -> {
-            String user = txtUser.getText();
-            String pass = txtPass.getText();
+            String login = txtUser.getText().trim();
+            String pass  = txtPass.getText().trim();
+
+            if (login.isEmpty() || pass.isEmpty()) {
+                lblMessage.setTextFill(Color.RED);
+                lblMessage.setText("Veuillez remplir tous les champs !");
+                return;
+            }
+
             try {
-                ConnexionDB.getConnection(user, pass);
-                lblMessage.setTextFill(Color.GREEN);
-                lblMessage.setText("Connexion réussie !");
-                // Ouvrir le menu principal
-                FenetreMenu menu = new FenetreMenu();
-                menu.afficher(stage);
+                String role = ConnexionDB.verifierUtilisateur(login, pass);
+                if (role != null) {
+                    lblMessage.setTextFill(Color.GREEN);
+                    lblMessage.setText("Connexion réussie !");
+                    if (role.equals("admin")) {
+                        new FenetreMenuAdmin().afficher(stage);
+                    } else {
+                        new FenetreMenuBibliothecaire().afficher(stage);
+                    }
+                } else {
+                    lblMessage.setTextFill(Color.RED);
+                    lblMessage.setText("Login ou mot de passe incorrect !");
+                }
             } catch (Exception ex) {
                 lblMessage.setTextFill(Color.RED);
                 lblMessage.setText("Erreur : " + ex.getMessage());

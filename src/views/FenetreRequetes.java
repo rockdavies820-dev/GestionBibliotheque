@@ -22,7 +22,7 @@ public class FenetreRequetes {
     private TableView<ObservableList<String>> table = new TableView<>();
     private String dernierSQL = "";
 
-    public void afficher(Stage stage) {
+    public void afficher(Stage stage, String role) {
         stage.setTitle("Requêtes - Gestion Bibliothèque");
 
         Text titre = new Text("Faire des Requêtes");
@@ -57,32 +57,32 @@ public class FenetreRequetes {
             if (cbRequetes.getValue() != null) {
                 switch (cbRequetes.getValue()) {
                     case "Liste de tous les étudiants":
-                        sql = "SELECT * FROM ETUDIANT";
+                        sql = "SELECT * FROM etudiant";
                         break;
                     case "Liste de tous les livres":
-                        sql = "SELECT * FROM LIVRE";
+                        sql = "SELECT * FROM livre";
                         break;
                     case "Liste de tous les emprunts":
-                        sql = "SELECT * FROM EMPRUNT";
+                        sql = "SELECT * FROM emprunt";
                         break;
                     case "Emprunts en cours (non retournés)":
-                        sql = "SELECT E.MATRICULE, E.NOM, E.PRENOMS, L.TITRE, EM.SORTIE " +
-                                "FROM ETUDIANT E " +
-                                "JOIN EMPRUNT EM ON E.MATRICULE = EM.MATRICULE " +
-                                "JOIN LIVRE L ON EM.CODE_LIV = L.CODE_LIV " +
-                                "WHERE EM.RETOUR IS NULL";
+                        sql = "SELECT e.matricule, e.nom, e.prenoms, l.titre, em.sortie " +
+                                "FROM etudiant e " +
+                                "JOIN emprunt em ON e.matricule = em.matricule " +
+                                "JOIN livre l ON em.code_liv = l.code_liv " +
+                                "WHERE em.retour IS NULL";
                         break;
                     case "Livres empruntés par étudiant":
-                        sql = "SELECT E.MATRICULE, E.NOM, E.PRENOMS, L.TITRE, L.AUTEUR, EM.SORTIE, EM.RETOUR " +
-                                "FROM ETUDIANT E " +
-                                "JOIN EMPRUNT EM ON E.MATRICULE = EM.MATRICULE " +
-                                "JOIN LIVRE L ON EM.CODE_LIV = L.CODE_LIV";
+                        sql = "SELECT e.matricule, e.nom, e.prenoms, l.titre, l.auteur, em.sortie, em.retour " +
+                                "FROM etudiant e " +
+                                "JOIN emprunt em ON e.matricule = em.matricule " +
+                                "JOIN livre l ON em.code_liv = l.code_liv";
                         break;
                     case "Nombre d'emprunts par étudiant":
-                        sql = "SELECT E.MATRICULE, E.NOM, E.PRENOMS, COUNT(EM.CODE_LIV) AS NB_EMPRUNTS " +
-                                "FROM ETUDIANT E " +
-                                "LEFT JOIN EMPRUNT EM ON E.MATRICULE = EM.MATRICULE " +
-                                "GROUP BY E.MATRICULE, E.NOM, E.PRENOMS";
+                        sql = "SELECT e.matricule, e.nom, e.prenoms, COUNT(em.code_liv) AS nb_emprunts " +
+                                "FROM etudiant e " +
+                                "LEFT JOIN emprunt em ON e.matricule = em.matricule " +
+                                "GROUP BY e.matricule, e.nom, e.prenoms";
                         break;
                 }
             } else if (!txtSQL.getText().isEmpty()) {
@@ -108,7 +108,13 @@ public class FenetreRequetes {
                     cbRequetes.getValue() != null ? cbRequetes.getValue() : "Requête personnalisée");
         });
 
-        btnRetour.setOnAction(e -> new FenetreMenu().afficher(stage));
+        btnRetour.setOnAction(e -> {
+            if (role.equals("admin")) {
+                new FenetreMenuAdmin().afficher(stage);
+            } else {
+                new FenetreMenuBibliothecaire().afficher(stage);
+            }
+        });
 
         HBox btnBox = new HBox(10, btnExecuter, btnExporterPDF, btnRetour);
         btnBox.setAlignment(Pos.CENTER);
@@ -130,14 +136,12 @@ public class FenetreRequetes {
             ResultSet rs = conn.createStatement().executeQuery(sql);
             ResultSetMetaData meta = rs.getMetaData();
             int cols = meta.getColumnCount();
-
             for (int i = 1; i <= cols; i++) {
                 final int idx = i - 1;
                 TableColumn<ObservableList<String>, String> col = new TableColumn<>(meta.getColumnName(i));
                 col.setCellValueFactory(param -> new javafx.beans.property.SimpleStringProperty(param.getValue().get(idx)));
                 table.getColumns().add(col);
             }
-
             while (rs.next()) {
                 ObservableList<String> row = FXCollections.observableArrayList();
                 for (int i = 1; i <= cols; i++) row.add(rs.getString(i));

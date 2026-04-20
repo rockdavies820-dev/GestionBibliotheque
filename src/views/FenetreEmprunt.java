@@ -20,7 +20,7 @@ public class FenetreEmprunt {
 
     private TableView<ObservableList<String>> table = new TableView<>();
 
-    public void afficher(Stage stage) {
+    public void afficher(Stage stage, String role) {
         stage.setTitle("Gestion des Emprunts");
 
         Text titre = new Text("Gestion des Emprunts");
@@ -51,7 +51,7 @@ public class FenetreEmprunt {
             if (selected != null) {
                 txtMatricule.setText(selected.get(0));
                 txtCodeLiv.setText(selected.get(1));
-                txtSortie.setText(selected.get(2));
+                txtSortie.setText(selected.get(2) != null ? selected.get(2) : "");
                 txtRetour.setText(selected.get(3) != null ? selected.get(3) : "");
                 txtMatricule.setDisable(true);
                 txtCodeLiv.setDisable(true);
@@ -63,13 +63,22 @@ public class FenetreEmprunt {
             txtCodeLiv.setDisable(false);
             try {
                 Connection conn = ConnexionDB.getConnection(null, null);
-                String sql = "INSERT INTO EMPRUNT VALUES (?, ?, TO_DATE(?, 'DD/MM/YYYY'), " +
-                        (txtRetour.getText().isEmpty() ? "NULL" : "TO_DATE(?, 'DD/MM/YYYY')") + ")";
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ps.setString(1, txtMatricule.getText());
-                ps.setString(2, txtCodeLiv.getText());
-                ps.setString(3, txtSortie.getText());
-                if (!txtRetour.getText().isEmpty()) ps.setString(4, txtRetour.getText());
+                String sql;
+                PreparedStatement ps;
+                if (txtRetour.getText().isEmpty()) {
+                    sql = "INSERT INTO emprunt VALUES (?, ?, TO_DATE(?, 'DD/MM/YYYY'), NULL)";
+                    ps = conn.prepareStatement(sql);
+                    ps.setString(1, txtMatricule.getText());
+                    ps.setString(2, txtCodeLiv.getText());
+                    ps.setString(3, txtSortie.getText());
+                } else {
+                    sql = "INSERT INTO emprunt VALUES (?, ?, TO_DATE(?, 'DD/MM/YYYY'), TO_DATE(?, 'DD/MM/YYYY'))";
+                    ps = conn.prepareStatement(sql);
+                    ps.setString(1, txtMatricule.getText());
+                    ps.setString(2, txtCodeLiv.getText());
+                    ps.setString(3, txtSortie.getText());
+                    ps.setString(4, txtRetour.getText());
+                }
                 ps.executeUpdate();
                 lblMessage.setText("Emprunt ajouté !");
                 viderFormulaire(txtMatricule, txtCodeLiv, txtSortie, txtRetour);
@@ -90,18 +99,21 @@ public class FenetreEmprunt {
                     if (response == ButtonType.OK) {
                         try {
                             Connection conn = ConnexionDB.getConnection(null, null);
-                            String sql = "UPDATE EMPRUNT SET SORTIE=TO_DATE(?, 'DD/MM/YYYY'), " +
-                                    "RETOUR=" + (txtRetour.getText().isEmpty() ? "NULL" : "TO_DATE(?, 'DD/MM/YYYY')") +
-                                    " WHERE MATRICULE=? AND CODE_LIV=?";
-                            PreparedStatement ps = conn.prepareStatement(sql);
-                            ps.setString(1, txtSortie.getText());
-                            if (!txtRetour.getText().isEmpty()) {
+                            String sql;
+                            PreparedStatement ps;
+                            if (txtRetour.getText().isEmpty()) {
+                                sql = "UPDATE emprunt SET sortie=TO_DATE(?, 'DD/MM/YYYY'), retour=NULL WHERE matricule=? AND code_liv=?";
+                                ps = conn.prepareStatement(sql);
+                                ps.setString(1, txtSortie.getText());
+                                ps.setString(2, txtMatricule.getText());
+                                ps.setString(3, txtCodeLiv.getText());
+                            } else {
+                                sql = "UPDATE emprunt SET sortie=TO_DATE(?, 'DD/MM/YYYY'), retour=TO_DATE(?, 'DD/MM/YYYY') WHERE matricule=? AND code_liv=?";
+                                ps = conn.prepareStatement(sql);
+                                ps.setString(1, txtSortie.getText());
                                 ps.setString(2, txtRetour.getText());
                                 ps.setString(3, txtMatricule.getText());
                                 ps.setString(4, txtCodeLiv.getText());
-                            } else {
-                                ps.setString(2, txtMatricule.getText());
-                                ps.setString(3, txtCodeLiv.getText());
                             }
                             ps.executeUpdate();
                             lblMessage.setText("Emprunt modifié !");
@@ -130,7 +142,7 @@ public class FenetreEmprunt {
                     if (response == ButtonType.OK) {
                         try {
                             Connection conn = ConnexionDB.getConnection(null, null);
-                            String sql = "DELETE FROM EMPRUNT WHERE MATRICULE = ? AND CODE_LIV = ?";
+                            String sql = "DELETE FROM emprunt WHERE matricule = ? AND code_liv = ?";
                             PreparedStatement ps = conn.prepareStatement(sql);
                             ps.setString(1, selected.get(0));
                             ps.setString(2, selected.get(1));
@@ -153,7 +165,11 @@ public class FenetreEmprunt {
         btnRetour.setOnAction(e -> {
             txtMatricule.setDisable(false);
             txtCodeLiv.setDisable(false);
-            new FenetreMenu().afficher(stage);
+            if (role.equals("admin")) {
+                new FenetreMenuAdmin().afficher(stage);
+            } else {
+                new FenetreMenuBibliothecaire().afficher(stage);
+            }
         });
 
         VBox vbox = new VBox(15, titre, formulaire, lblMessage, table, btnRetour);
@@ -174,7 +190,12 @@ public class FenetreEmprunt {
         table.getItems().clear();
         try {
             Connection conn = ConnexionDB.getConnection(null, null);
-            ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM EMPRUNT");
+            ResultSet rs = conn.createStatement().executeQuery(
+                    "SELECT matricule, code_liv, " +
+                            "TO_CHAR(sortie, 'DD/MM/YYYY') AS sortie, " +
+                            "TO_CHAR(retour, 'DD/MM/YYYY') AS retour " +
+                            "FROM emprunt"
+            );
             ResultSetMetaData meta = rs.getMetaData();
             int cols = meta.getColumnCount();
             for (int i = 1; i <= cols; i++) {

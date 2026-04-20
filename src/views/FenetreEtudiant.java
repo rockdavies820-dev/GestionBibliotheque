@@ -20,7 +20,7 @@ public class FenetreEtudiant {
 
     private TableView<ObservableList<String>> table = new TableView<>();
 
-    public void afficher(Stage stage) {
+    public void afficher(Stage stage, String role) {
         stage.setTitle("Gestion des Étudiants");
 
         Text titre = new Text("Gestion des Étudiants");
@@ -47,7 +47,6 @@ public class FenetreEtudiant {
 
         chargerDonnees();
 
-        // Clic sur une ligne → remplit le formulaire
         table.setOnMouseClicked(e -> {
             ObservableList<String> selected = table.getSelectionModel().getSelectedItem();
             if (selected != null) {
@@ -56,7 +55,7 @@ public class FenetreEtudiant {
                 txtPrenoms.setText(selected.get(2));
                 txtSexe.setText(selected.get(3));
                 txtClasse.setText(selected.get(4));
-                txtMatricule.setDisable(true); // matricule non modifiable
+                txtMatricule.setDisable(true);
             }
         });
 
@@ -64,7 +63,7 @@ public class FenetreEtudiant {
             txtMatricule.setDisable(false);
             try {
                 Connection conn = ConnexionDB.getConnection(null, null);
-                String sql = "INSERT INTO ETUDIANT VALUES (?, ?, ?, ?, ?)";
+                String sql = "INSERT INTO etudiant VALUES (?, ?, ?, ?, ?)";
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ps.setString(1, txtMatricule.getText());
                 ps.setString(2, txtNom.getText());
@@ -91,7 +90,7 @@ public class FenetreEtudiant {
                     if (response == ButtonType.OK) {
                         try {
                             Connection conn = ConnexionDB.getConnection(null, null);
-                            String sql = "UPDATE ETUDIANT SET NOM=?, PRENOMS=?, SEXE=?, CODE_CL=? WHERE MATRICULE=?";
+                            String sql = "UPDATE etudiant SET nom=?, prenoms=?, sexe=?, code_cl=? WHERE matricule=?";
                             PreparedStatement ps = conn.prepareStatement(sql);
                             ps.setString(1, txtNom.getText());
                             ps.setString(2, txtPrenoms.getText());
@@ -124,7 +123,7 @@ public class FenetreEtudiant {
                     if (response == ButtonType.OK) {
                         try {
                             Connection conn = ConnexionDB.getConnection(null, null);
-                            String sql = "DELETE FROM ETUDIANT WHERE MATRICULE = ?";
+                            String sql = "DELETE FROM etudiant WHERE matricule = ?";
                             PreparedStatement ps = conn.prepareStatement(sql);
                             ps.setString(1, selected.get(0));
                             ps.executeUpdate();
@@ -144,7 +143,11 @@ public class FenetreEtudiant {
 
         btnRetour.setOnAction(e -> {
             txtMatricule.setDisable(false);
-            new FenetreMenu().afficher(stage);
+            if (role.equals("admin")) {
+                new FenetreMenuAdmin().afficher(stage);
+            } else {
+                new FenetreMenuBibliothecaire().afficher(stage);
+            }
         });
 
         VBox vbox = new VBox(15, titre, formulaire, lblMessage, table, btnRetour);
@@ -165,7 +168,7 @@ public class FenetreEtudiant {
         table.getItems().clear();
         try {
             Connection conn = ConnexionDB.getConnection(null, null);
-            ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM ETUDIANT");
+            ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM etudiant");
             ResultSetMetaData meta = rs.getMetaData();
             int cols = meta.getColumnCount();
             for (int i = 1; i <= cols; i++) {
@@ -184,4 +187,3 @@ public class FenetreEtudiant {
         }
     }
 }
-
