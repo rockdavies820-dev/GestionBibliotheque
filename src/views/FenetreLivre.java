@@ -62,14 +62,15 @@ public class FenetreLivre {
         btnAjouter.setOnAction(e -> {
             txtCode.setDisable(false);
             try {
-                Connection conn = ConnexionDB.getConnection(null, null);
-                String sql = "INSERT INTO livre VALUES (?, ?, ?, ?, ?)";
+                Connection conn = ConnexionDB.getConnection();
+                String sql = "INSERT INTO livre (code_liv, titre, auteur, genre, prix, etablissement_id) VALUES (?, ?, ?, ?, ?, ?)";
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ps.setString(1, txtCode.getText());
                 ps.setString(2, txtTitre.getText());
                 ps.setString(3, txtAuteur.getText());
                 ps.setString(4, txtGenre.getText());
                 ps.setDouble(5, Double.parseDouble(txtPrix.getText()));
+                ps.setInt(6, ConnexionDB.getEtablissementId());
                 ps.executeUpdate();
                 lblMessage.setText("Livre ajouté !");
                 viderFormulaire(txtCode, txtTitre, txtAuteur, txtGenre, txtPrix);
@@ -89,14 +90,15 @@ public class FenetreLivre {
                 alert.showAndWait().ifPresent(response -> {
                     if (response == ButtonType.OK) {
                         try {
-                            Connection conn = ConnexionDB.getConnection(null, null);
-                            String sql = "UPDATE livre SET titre=?, auteur=?, genre=?, prix=? WHERE code_liv=?";
+                            Connection conn = ConnexionDB.getConnection();
+                            String sql = "UPDATE livre SET titre=?, auteur=?, genre=?, prix=? WHERE code_liv=? AND etablissement_id=?";
                             PreparedStatement ps = conn.prepareStatement(sql);
                             ps.setString(1, txtTitre.getText());
                             ps.setString(2, txtAuteur.getText());
                             ps.setString(3, txtGenre.getText());
                             ps.setDouble(4, Double.parseDouble(txtPrix.getText()));
                             ps.setString(5, txtCode.getText());
+                            ps.setInt(6, ConnexionDB.getEtablissementId());
                             ps.executeUpdate();
                             lblMessage.setText("Livre modifié !");
                             txtCode.setDisable(false);
@@ -122,10 +124,11 @@ public class FenetreLivre {
                 alert.showAndWait().ifPresent(response -> {
                     if (response == ButtonType.OK) {
                         try {
-                            Connection conn = ConnexionDB.getConnection(null, null);
-                            String sql = "DELETE FROM livre WHERE code_liv = ?";
+                            Connection conn = ConnexionDB.getConnection();
+                            String sql = "DELETE FROM livre WHERE code_liv=? AND etablissement_id=?";
                             PreparedStatement ps = conn.prepareStatement(sql);
                             ps.setString(1, selected.get(0));
+                            ps.setInt(2, ConnexionDB.getEtablissementId());
                             ps.executeUpdate();
                             lblMessage.setText("Livre supprimé !");
                             txtCode.setDisable(false);
@@ -167,8 +170,11 @@ public class FenetreLivre {
         table.getColumns().clear();
         table.getItems().clear();
         try {
-            Connection conn = ConnexionDB.getConnection(null, null);
-            ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM livre");
+            Connection conn = ConnexionDB.getConnection();
+            String sql = "SELECT code_liv, titre, auteur, genre, prix FROM livre WHERE etablissement_id=?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, ConnexionDB.getEtablissementId());
+            ResultSet rs = ps.executeQuery();
             ResultSetMetaData meta = rs.getMetaData();
             int cols = meta.getColumnCount();
             for (int i = 1; i <= cols; i++) {

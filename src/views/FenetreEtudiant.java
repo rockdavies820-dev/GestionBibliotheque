@@ -62,14 +62,15 @@ public class FenetreEtudiant {
         btnAjouter.setOnAction(e -> {
             txtMatricule.setDisable(false);
             try {
-                Connection conn = ConnexionDB.getConnection(null, null);
-                String sql = "INSERT INTO etudiant VALUES (?, ?, ?, ?, ?)";
+                Connection conn = ConnexionDB.getConnection();
+                String sql = "INSERT INTO etudiant (matricule, nom, prenoms, sexe, code_cl, etablissement_id) VALUES (?, ?, ?, ?, ?, ?)";
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ps.setString(1, txtMatricule.getText());
                 ps.setString(2, txtNom.getText());
                 ps.setString(3, txtPrenoms.getText());
                 ps.setString(4, txtSexe.getText());
                 ps.setString(5, txtClasse.getText());
+                ps.setInt(6, ConnexionDB.getEtablissementId());
                 ps.executeUpdate();
                 lblMessage.setText("Étudiant ajouté !");
                 viderFormulaire(txtMatricule, txtNom, txtPrenoms, txtSexe, txtClasse);
@@ -89,14 +90,15 @@ public class FenetreEtudiant {
                 alert.showAndWait().ifPresent(response -> {
                     if (response == ButtonType.OK) {
                         try {
-                            Connection conn = ConnexionDB.getConnection(null, null);
-                            String sql = "UPDATE etudiant SET nom=?, prenoms=?, sexe=?, code_cl=? WHERE matricule=?";
+                            Connection conn = ConnexionDB.getConnection();
+                            String sql = "UPDATE etudiant SET nom=?, prenoms=?, sexe=?, code_cl=? WHERE matricule=? AND etablissement_id=?";
                             PreparedStatement ps = conn.prepareStatement(sql);
                             ps.setString(1, txtNom.getText());
                             ps.setString(2, txtPrenoms.getText());
                             ps.setString(3, txtSexe.getText());
                             ps.setString(4, txtClasse.getText());
                             ps.setString(5, txtMatricule.getText());
+                            ps.setInt(6, ConnexionDB.getEtablissementId());
                             ps.executeUpdate();
                             lblMessage.setText("Étudiant modifié !");
                             txtMatricule.setDisable(false);
@@ -122,10 +124,11 @@ public class FenetreEtudiant {
                 alert.showAndWait().ifPresent(response -> {
                     if (response == ButtonType.OK) {
                         try {
-                            Connection conn = ConnexionDB.getConnection(null, null);
-                            String sql = "DELETE FROM etudiant WHERE matricule = ?";
+                            Connection conn = ConnexionDB.getConnection();
+                            String sql = "DELETE FROM etudiant WHERE matricule=? AND etablissement_id=?";
                             PreparedStatement ps = conn.prepareStatement(sql);
                             ps.setString(1, selected.get(0));
+                            ps.setInt(2, ConnexionDB.getEtablissementId());
                             ps.executeUpdate();
                             lblMessage.setText("Étudiant supprimé !");
                             txtMatricule.setDisable(false);
@@ -167,8 +170,11 @@ public class FenetreEtudiant {
         table.getColumns().clear();
         table.getItems().clear();
         try {
-            Connection conn = ConnexionDB.getConnection(null, null);
-            ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM etudiant");
+            Connection conn = ConnexionDB.getConnection();
+            String sql = "SELECT matricule, nom, prenoms, sexe, code_cl FROM etudiant WHERE etablissement_id=?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, ConnexionDB.getEtablissementId());
+            ResultSet rs = ps.executeQuery();
             ResultSetMetaData meta = rs.getMetaData();
             int cols = meta.getColumnCount();
             for (int i = 1; i <= cols; i++) {

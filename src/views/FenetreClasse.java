@@ -58,12 +58,13 @@ public class FenetreClasse {
         btnAjouter.setOnAction(e -> {
             txtCode.setDisable(false);
             try {
-                Connection conn = ConnexionDB.getConnection(null, null);
-                String sql = "INSERT INTO classe VALUES (?, ?, ?)";
+                Connection conn = ConnexionDB.getConnection();
+                String sql = "INSERT INTO classe (code_cl, intitule, effectif, etablissement_id) VALUES (?, ?, ?, ?)";
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ps.setString(1, txtCode.getText());
                 ps.setString(2, txtIntitule.getText());
                 ps.setInt(3, Integer.parseInt(txtEffectif.getText()));
+                ps.setInt(4, ConnexionDB.getEtablissementId());
                 ps.executeUpdate();
                 lblMessage.setText("Classe ajoutée !");
                 viderFormulaire(txtCode, txtIntitule, txtEffectif);
@@ -83,12 +84,13 @@ public class FenetreClasse {
                 alert.showAndWait().ifPresent(response -> {
                     if (response == ButtonType.OK) {
                         try {
-                            Connection conn = ConnexionDB.getConnection(null, null);
-                            String sql = "UPDATE classe SET intitule=?, effectif=? WHERE code_cl=?";
+                            Connection conn = ConnexionDB.getConnection();
+                            String sql = "UPDATE classe SET intitule=?, effectif=? WHERE code_cl=? AND etablissement_id=?";
                             PreparedStatement ps = conn.prepareStatement(sql);
                             ps.setString(1, txtIntitule.getText());
                             ps.setInt(2, Integer.parseInt(txtEffectif.getText()));
                             ps.setString(3, txtCode.getText());
+                            ps.setInt(4, ConnexionDB.getEtablissementId());
                             ps.executeUpdate();
                             lblMessage.setText("Classe modifiée !");
                             txtCode.setDisable(false);
@@ -114,10 +116,11 @@ public class FenetreClasse {
                 alert.showAndWait().ifPresent(response -> {
                     if (response == ButtonType.OK) {
                         try {
-                            Connection conn = ConnexionDB.getConnection(null, null);
-                            String sql = "DELETE FROM classe WHERE code_cl = ?";
+                            Connection conn = ConnexionDB.getConnection();
+                            String sql = "DELETE FROM classe WHERE code_cl=? AND etablissement_id=?";
                             PreparedStatement ps = conn.prepareStatement(sql);
                             ps.setString(1, selected.get(0));
+                            ps.setInt(2, ConnexionDB.getEtablissementId());
                             ps.executeUpdate();
                             lblMessage.setText("Classe supprimée !");
                             txtCode.setDisable(false);
@@ -159,8 +162,11 @@ public class FenetreClasse {
         table.getColumns().clear();
         table.getItems().clear();
         try {
-            Connection conn = ConnexionDB.getConnection(null, null);
-            ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM classe");
+            Connection conn = ConnexionDB.getConnection();
+            String sql = "SELECT code_cl, intitule, effectif FROM classe WHERE etablissement_id=?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, ConnexionDB.getEtablissementId());
+            ResultSet rs = ps.executeQuery();
             ResultSetMetaData meta = rs.getMetaData();
             int cols = meta.getColumnCount();
             for (int i = 1; i <= cols; i++) {

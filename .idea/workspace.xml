@@ -4,7 +4,13 @@
     <list default="true" id="a77a3811-7032-4f29-9acd-e2b17649cf1b" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.github/workflows/build.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/build.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MainApp.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/MainApp.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/database/ConnexionDB.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/database/ConnexionDB.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/FenetreClasse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/views/FenetreClasse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/FenetreConnexion.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/views/FenetreConnexion.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/FenetreEmprunt.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/views/FenetreEmprunt.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/FenetreEtudiant.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/views/FenetreEtudiant.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/FenetreLivre.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/views/FenetreLivre.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/FenetreRequetes.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/views/FenetreRequetes.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

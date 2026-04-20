@@ -52,36 +52,46 @@ public class FenetreRequetes {
         btnExecuter.setStyle("-fx-background-color: darkblue; -fx-text-fill: white;");
         btnExporterPDF.setStyle("-fx-background-color: darkgreen; -fx-text-fill: white;");
 
+        int etabId = ConnexionDB.getEtablissementId();
+
         btnExecuter.setOnAction(e -> {
             String sql = "";
             if (cbRequetes.getValue() != null) {
                 switch (cbRequetes.getValue()) {
                     case "Liste de tous les étudiants":
-                        sql = "SELECT * FROM etudiant";
+                        sql = "SELECT matricule, nom, prenoms, sexe, code_cl FROM etudiant WHERE etablissement_id=" + etabId;
                         break;
                     case "Liste de tous les livres":
-                        sql = "SELECT * FROM livre";
+                        sql = "SELECT code_liv, titre, auteur, genre, prix FROM livre WHERE etablissement_id=" + etabId;
                         break;
                     case "Liste de tous les emprunts":
-                        sql = "SELECT * FROM emprunt";
+                        sql = "SELECT matricule, code_liv, " +
+                                "strftime('%d/%m/%Y', sortie) AS sortie, " +
+                                "strftime('%d/%m/%Y', retour) AS retour " +
+                                "FROM emprunt WHERE etablissement_id=" + etabId;
                         break;
                     case "Emprunts en cours (non retournés)":
-                        sql = "SELECT e.matricule, e.nom, e.prenoms, l.titre, em.sortie " +
+                        sql = "SELECT e.matricule, e.nom, e.prenoms, l.titre, " +
+                                "strftime('%d/%m/%Y', em.sortie) AS sortie " +
                                 "FROM etudiant e " +
                                 "JOIN emprunt em ON e.matricule = em.matricule " +
                                 "JOIN livre l ON em.code_liv = l.code_liv " +
-                                "WHERE em.retour IS NULL";
+                                "WHERE em.retour IS NULL AND e.etablissement_id=" + etabId;
                         break;
                     case "Livres empruntés par étudiant":
-                        sql = "SELECT e.matricule, e.nom, e.prenoms, l.titre, l.auteur, em.sortie, em.retour " +
+                        sql = "SELECT e.matricule, e.nom, e.prenoms, l.titre, l.auteur, " +
+                                "strftime('%d/%m/%Y', em.sortie) AS sortie, " +
+                                "strftime('%d/%m/%Y', em.retour) AS retour " +
                                 "FROM etudiant e " +
                                 "JOIN emprunt em ON e.matricule = em.matricule " +
-                                "JOIN livre l ON em.code_liv = l.code_liv";
+                                "JOIN livre l ON em.code_liv = l.code_liv " +
+                                "WHERE e.etablissement_id=" + etabId;
                         break;
                     case "Nombre d'emprunts par étudiant":
                         sql = "SELECT e.matricule, e.nom, e.prenoms, COUNT(em.code_liv) AS nb_emprunts " +
                                 "FROM etudiant e " +
                                 "LEFT JOIN emprunt em ON e.matricule = em.matricule " +
+                                "WHERE e.etablissement_id=" + etabId + " " +
                                 "GROUP BY e.matricule, e.nom, e.prenoms";
                         break;
                 }
@@ -102,7 +112,7 @@ public class FenetreRequetes {
                 lblMessage.setText("Exécutez d'abord une requête !");
                 return;
             }
-            String nomFichier = "C:\\Users\\rockd\\OneDrive\\Desktop\\rapport_" +
+            String nomFichier = System.getProperty("user.home") + "\\Desktop\\rapport_" +
                     System.currentTimeMillis() + ".pdf";
             ExportPDF.exporterRequete(dernierSQL, nomFichier,
                     cbRequetes.getValue() != null ? cbRequetes.getValue() : "Requête personnalisée");
@@ -132,7 +142,7 @@ public class FenetreRequetes {
         table.getColumns().clear();
         table.getItems().clear();
         try {
-            Connection conn = ConnexionDB.getConnection(null, null);
+            Connection conn = ConnexionDB.getConnection();
             ResultSet rs = conn.createStatement().executeQuery(sql);
             ResultSetMetaData meta = rs.getMetaData();
             int cols = meta.getColumnCount();

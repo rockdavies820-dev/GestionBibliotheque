@@ -15,10 +15,13 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.sql.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class FenetreEmprunt {
 
     private TableView<ObservableList<String>> table = new TableView<>();
+    private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public void afficher(Stage stage, String role) {
         stage.setTitle("Gestion des Emprunts");
@@ -62,22 +65,26 @@ public class FenetreEmprunt {
             txtMatricule.setDisable(false);
             txtCodeLiv.setDisable(false);
             try {
-                Connection conn = ConnexionDB.getConnection(null, null);
+                Connection conn = ConnexionDB.getConnection();
+                String sortieISO = LocalDate.parse(txtSortie.getText(), FMT).toString();
                 String sql;
                 PreparedStatement ps;
                 if (txtRetour.getText().isEmpty()) {
-                    sql = "INSERT INTO emprunt VALUES (?, ?, TO_DATE(?, 'DD/MM/YYYY'), NULL)";
+                    sql = "INSERT INTO emprunt (matricule, code_liv, sortie, retour, etablissement_id) VALUES (?, ?, ?, NULL, ?)";
                     ps = conn.prepareStatement(sql);
                     ps.setString(1, txtMatricule.getText());
                     ps.setString(2, txtCodeLiv.getText());
-                    ps.setString(3, txtSortie.getText());
+                    ps.setString(3, sortieISO);
+                    ps.setInt(4, ConnexionDB.getEtablissementId());
                 } else {
-                    sql = "INSERT INTO emprunt VALUES (?, ?, TO_DATE(?, 'DD/MM/YYYY'), TO_DATE(?, 'DD/MM/YYYY'))";
+                    String retourISO = LocalDate.parse(txtRetour.getText(), FMT).toString();
+                    sql = "INSERT INTO emprunt (matricule, code_liv, sortie, retour, etablissement_id) VALUES (?, ?, ?, ?, ?)";
                     ps = conn.prepareStatement(sql);
                     ps.setString(1, txtMatricule.getText());
                     ps.setString(2, txtCodeLiv.getText());
-                    ps.setString(3, txtSortie.getText());
-                    ps.setString(4, txtRetour.getText());
+                    ps.setString(3, sortieISO);
+                    ps.setString(4, retourISO);
+                    ps.setInt(5, ConnexionDB.getEtablissementId());
                 }
                 ps.executeUpdate();
                 lblMessage.setText("Emprunt ajouté !");
@@ -98,22 +105,26 @@ public class FenetreEmprunt {
                 alert.showAndWait().ifPresent(response -> {
                     if (response == ButtonType.OK) {
                         try {
-                            Connection conn = ConnexionDB.getConnection(null, null);
+                            Connection conn = ConnexionDB.getConnection();
+                            String sortieISO = LocalDate.parse(txtSortie.getText(), FMT).toString();
                             String sql;
                             PreparedStatement ps;
                             if (txtRetour.getText().isEmpty()) {
-                                sql = "UPDATE emprunt SET sortie=TO_DATE(?, 'DD/MM/YYYY'), retour=NULL WHERE matricule=? AND code_liv=?";
+                                sql = "UPDATE emprunt SET sortie=?, retour=NULL WHERE matricule=? AND code_liv=? AND etablissement_id=?";
                                 ps = conn.prepareStatement(sql);
-                                ps.setString(1, txtSortie.getText());
+                                ps.setString(1, sortieISO);
                                 ps.setString(2, txtMatricule.getText());
                                 ps.setString(3, txtCodeLiv.getText());
+                                ps.setInt(4, ConnexionDB.getEtablissementId());
                             } else {
-                                sql = "UPDATE emprunt SET sortie=TO_DATE(?, 'DD/MM/YYYY'), retour=TO_DATE(?, 'DD/MM/YYYY') WHERE matricule=? AND code_liv=?";
+                                String retourISO = LocalDate.parse(txtRetour.getText(), FMT).toString();
+                                sql = "UPDATE emprunt SET sortie=?, retour=? WHERE matricule=? AND code_liv=? AND etablissement_id=?";
                                 ps = conn.prepareStatement(sql);
-                                ps.setString(1, txtSortie.getText());
-                                ps.setString(2, txtRetour.getText());
+                                ps.setString(1, sortieISO);
+                                ps.setString(2, retourISO);
                                 ps.setString(3, txtMatricule.getText());
                                 ps.setString(4, txtCodeLiv.getText());
+                                ps.setInt(5, ConnexionDB.getEtablissementId());
                             }
                             ps.executeUpdate();
                             lblMessage.setText("Emprunt modifié !");
@@ -141,11 +152,12 @@ public class FenetreEmprunt {
                 alert.showAndWait().ifPresent(response -> {
                     if (response == ButtonType.OK) {
                         try {
-                            Connection conn = ConnexionDB.getConnection(null, null);
-                            String sql = "DELETE FROM emprunt WHERE matricule = ? AND code_liv = ?";
+                            Connection conn = ConnexionDB.getConnection();
+                            String sql = "DELETE FROM emprunt WHERE matricule=? AND code_liv=? AND etablissement_id=?";
                             PreparedStatement ps = conn.prepareStatement(sql);
                             ps.setString(1, selected.get(0));
                             ps.setString(2, selected.get(1));
+                            ps.setInt(3, ConnexionDB.getEtablissementId());
                             ps.executeUpdate();
                             lblMessage.setText("Emprunt supprimé !");
                             txtMatricule.setDisable(false);
@@ -189,13 +201,14 @@ public class FenetreEmprunt {
         table.getColumns().clear();
         table.getItems().clear();
         try {
-            Connection conn = ConnexionDB.getConnection(null, null);
-            ResultSet rs = conn.createStatement().executeQuery(
-                    "SELECT matricule, code_liv, " +
-                            "TO_CHAR(sortie, 'DD/MM/YYYY') AS sortie, " +
-                            "TO_CHAR(retour, 'DD/MM/YYYY') AS retour " +
-                            "FROM emprunt"
-            );
+            Connection conn = ConnexionDB.getConnection();
+            String sql = "SELECT matricule, code_liv, " +
+                    "strftime('%d/%m/%Y', sortie) AS sortie, " +
+                    "strftime('%d/%m/%Y', retour) AS retour " +
+                    "FROM emprunt WHERE etablissement_id=?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, ConnexionDB.getEtablissementId());
+            ResultSet rs = ps.executeQuery();
             ResultSetMetaData meta = rs.getMetaData();
             int cols = meta.getColumnCount();
             for (int i = 1; i <= cols; i++) {
