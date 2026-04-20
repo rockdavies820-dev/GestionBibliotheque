@@ -24,9 +24,19 @@ jobs:
           $javafxLibs = "$javaHome\lib"
           $cp = "$javafxLibs\javafx.controls.jar;$javafxLibs\javafx.fxml.jar;$javafxLibs\javafx.base.jar;$javafxLibs\javafx.graphics.jar;libs\itextpdf.jar;libs\sqlite.jar"
           $sources = Get-ChildItem -Recurse -Filter "*.java" -Path src | Select-Object -ExpandProperty FullName
+          Write-Host "=== Sources ==="
+          $sources
           javac --module-path $javafxLibs --add-modules javafx.controls,javafx.fxml -cp $cp -d out $sources
+          Write-Host "=== Classes dans out ==="
+          Get-ChildItem -Recurse out -Filter "*.class"
+          if ((Get-ChildItem -Recurse out -Filter "*.class").Count -eq 0) {
+            Write-Error "ERREUR: Aucune classe compilée!"
+            exit 1
+          }
           Copy-Item src/favicon.ico out/favicon.ico
           jar --create --file dist/GestionBibliotheque.jar --main-class=MainApp -C out .
+          Write-Host "=== Contenu JAR ==="
+          jar tf dist/GestionBibliotheque.jar
           Copy-Item libs/itextpdf.jar dist/itextpdf.jar
           Copy-Item libs/sqlite.jar dist/sqlite.jar
           $jmodsPath = "$javaHome\jmods"
