@@ -15,6 +15,11 @@ public class ConnexionDB {
 
     public static Connection getConnection() throws SQLException {
         if (connection == null || connection.isClosed()) {
+            try {
+                Class.forName("org.sqlite.JDBC");
+            } catch (ClassNotFoundException e) {
+                throw new SQLException("Driver SQLite non trouvé !", e);
+            }
             String url = "jdbc:sqlite:" + getDBPath();
             connection = DriverManager.getConnection(url);
             initialiserBase();

@@ -19,7 +19,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path dist
           New-Item -ItemType Directory -Force -Path out
           Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/com/itextpdf/itextpdf/5.5.13.3/itextpdf-5.5.13.3.jar" -OutFile libs/itextpdf.jar
-          Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.45.1.0/sqlite-jdbc-3.45.1.0.jar" -OutFile libs/sqlite.jar
+          Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.36.0.3/sqlite-jdbc-3.36.0.3.jar" -OutFile libs/sqlite.jar
           $javaHome = $env:JAVA_HOME
           $javafxLibs = "$javaHome\lib"
           $cp = "$javafxLibs\javafx.controls.jar;$javafxLibs\javafx.fxml.jar;$javafxLibs\javafx.base.jar;$javafxLibs\javafx.graphics.jar;libs\itextpdf.jar;libs\sqlite.jar"
