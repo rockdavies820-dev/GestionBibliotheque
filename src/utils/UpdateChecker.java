@@ -7,15 +7,16 @@ import java.net.*;
 import java.nio.file.*;
 
 public class UpdateChecker {
-    private static final String VERSION_ACTUELLE = "1.4.0";
+    private static final String VERSION_ACTUELLE = "1.5.0";
     private static final String VERSION_URL = "https://raw.githubusercontent.com/rockdavies820-dev/GestionBibliotheque/main/version.txt";
+    private static final String API_RELEASE_URL = "https://api.github.com/repos/rockdavies820-dev/GestionBibliotheque/releases/latest";
 
     public static void verifier() {
         new Thread(() -> {
             try {
                 URL url = new URL(VERSION_URL);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+                conn.setRequestProperty("User-Agent", "GestionBibliotheque");
                 conn.setConnectTimeout(5000);
                 conn.setReadTimeout(5000);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -42,6 +43,37 @@ public class UpdateChecker {
         });
     }
 
+    private static String getDownloadUrl(String version) throws Exception {
+        // Appel API GitHub pour obtenir l'URL directe du .exe
+        URL url = new URL(API_RELEASE_URL);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestProperty("User-Agent", "GestionBibliotheque");
+        conn.setRequestProperty("Accept", "application/vnd.github.v3+json");
+        conn.setConnectTimeout(10000);
+        conn.setReadTimeout(10000);
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        StringBuilder json = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) json.append(line);
+        reader.close();
+
+        // Parser manuellement le JSON pour trouver browser_download_url du .exe
+        String jsonStr = json.toString();
+        String marker = "\"browser_download_url\":\"";
+        int idx = jsonStr.indexOf(marker);
+        while (idx != -1) {
+            int start = idx + marker.length();
+            int end = jsonStr.indexOf("\"", start);
+            String dlUrl = jsonStr.substring(start, end);
+            if (dlUrl.endsWith(".exe")) {
+                return dlUrl;
+            }
+            idx = jsonStr.indexOf(marker, end);
+        }
+        throw new Exception("URL de telechargement introuvable dans la Release");
+    }
+
     private static void telechargerEtInstaller(String version) {
         new Thread(() -> {
             try {
@@ -53,39 +85,18 @@ public class UpdateChecker {
                     info.show();
                 });
 
+                // Obtenir l'URL directe via l'API GitHub
+                String downloadUrl = getDownloadUrl(version);
                 String tempPath = System.getenv("TEMP") + "\\GestionBibliotheque_update.exe";
-                String downloadUrl = "https://github.com/rockdavies820-dev/GestionBibliotheque/releases/download/v"
-                        + version + "/GestionBibliotheque-" + version + ".exe";
 
-                // Suivre toutes les redirections manuellement avec headers complets
-                String currentUrl = downloadUrl;
-                HttpURLConnection conn = null;
-                int maxRedirects = 10;
+                // Telecharger depuis l'URL directe (browser_download_url)
+                URL url = new URL(downloadUrl);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setInstanceFollowRedirects(true);
+                conn.setRequestProperty("User-Agent", "GestionBibliotheque");
+                conn.setConnectTimeout(30000);
+                conn.setReadTimeout(120000);
 
-                for (int i = 0; i < maxRedirects; i++) {
-                    conn = (HttpURLConnection) new URL(currentUrl).openConnection();
-                    conn.setInstanceFollowRedirects(false);
-                    conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-                    conn.setRequestProperty("Accept", "application/octet-stream,*/*");
-                    conn.setRequestProperty("Accept-Language", "en-US,en;q=0.9");
-                    conn.setConnectTimeout(30000);
-                    conn.setReadTimeout(120000);
-
-                    int status = conn.getResponseCode();
-
-                    if (status == 200) {
-                        break; // On a le bon fichier
-                    } else if (status == 301 || status == 302 || status == 303 || status == 307 || status == 308) {
-                        currentUrl = conn.getHeaderField("Location");
-                        conn.disconnect();
-                    } else {
-                        throw new Exception("HTTP " + status + " pour " + currentUrl);
-                    }
-                }
-
-                if (conn == null) throw new Exception("Trop de redirections");
-
-                // Ecrire le fichier
                 try (InputStream in = conn.getInputStream()) {
                     Files.copy(in, Paths.get(tempPath), StandardCopyOption.REPLACE_EXISTING);
                 }
