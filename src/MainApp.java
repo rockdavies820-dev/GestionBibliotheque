@@ -7,18 +7,25 @@ import utils.UpdateChecker;
 public class MainApp extends Application {
     @Override
     public void start(Stage primaryStage) {
-        // Vérifier les mises à jour
+        // Verifier les mises a jour
         UpdateChecker.verifier();
 
-        // Icône depuis les ressources
+        // Icone depuis les ressources (PNG requis par JavaFX)
         try {
-            Image icon = new Image(MainApp.class.getResourceAsStream("/favicon.ico"));
-            primaryStage.getIcons().add(icon);
+            Image icon = new Image(MainApp.class.getResourceAsStream("/favicon.png"));
+            if (icon != null && !icon.isError()) {
+                primaryStage.getIcons().add(icon);
+            }
         } catch (Exception e) {
-            System.out.println("Icône non chargée : " + e.getMessage());
+            System.out.println("Icone non chargee : " + e.getMessage());
         }
 
-        primaryStage.setTitle("Gestion Bibliothèque");
+        primaryStage.setTitle("Gestion Bibliotheque");
+
+        // Taille minimale fixe — empeche le retrecissement
+        primaryStage.setMinWidth(450);
+        primaryStage.setMinHeight(350);
+
         FenetreConnexion connexion = new FenetreConnexion();
         connexion.afficher(primaryStage);
     }
