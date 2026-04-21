@@ -4,16 +4,21 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import java.io.*;
 import java.net.*;
+import java.nio.file.*;
 
 public class UpdateChecker {
-    private static final String VERSION_ACTUELLE = "1.1.0";
+    private static final String VERSION_ACTUELLE = "1.3.0";
     private static final String VERSION_URL = "https://raw.githubusercontent.com/rockdavies820-dev/GestionBibliotheque/main/version.txt";
 
     public static void verifier() {
         new Thread(() -> {
             try {
                 URL url = new URL(VERSION_URL);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 String versionEnLigne = reader.readLine().trim();
                 reader.close();
                 if (!versionEnLigne.equals(VERSION_ACTUELLE)) {
@@ -44,38 +49,49 @@ public class UpdateChecker {
                     Alert info = new Alert(Alert.AlertType.INFORMATION);
                     info.setTitle("Telechargement");
                     info.setHeaderText("Telechargement en cours...");
-                    info.setContentText("Veuillez patienter.");
+                    info.setContentText("Veuillez patienter, ne fermez pas l'application.");
                     info.show();
                 });
 
                 String downloadUrl = "https://github.com/rockdavies820-dev/GestionBibliotheque/releases/download/v"
                         + version + "/GestionBibliotheque-" + version + ".exe";
 
-                // Utiliser le dossier TEMP de Windows — toujours accessible
                 String tempPath = System.getenv("TEMP") + "\\GestionBibliotheque_update.exe";
 
-                ProcessBuilder pb = new ProcessBuilder(
-                        "C:\\Windows\\System32\\curl.exe",
-                        "-L",
-                        "-A", "Mozilla/5.0",
-                        "-o", tempPath,
-                        downloadUrl
-                );
-                pb.redirectErrorStream(true);
-                Process process = pb.start();
+                // Telecharger via Java natif avec suivi des redirections
+                HttpURLConnection conn = (HttpURLConnection) new URL(downloadUrl).openConnection();
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                conn.setInstanceFollowRedirects(true);
+                conn.setConnectTimeout(30000);
+                conn.setReadTimeout(120000);
 
-                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                StringBuilder output = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) output.append(line).append("\n");
+                // Suivre manuellement les redirections (GitHub en a plusieurs)
+                int status = conn.getResponseCode();
+                while (status == HttpURLConnection.HTTP_MOVED_TEMP
+                        || status == HttpURLConnection.HTTP_MOVED_PERM
+                        || status == 303) {
+                    String newUrl = conn.getHeaderField("Location");
+                    conn.disconnect();
+                    conn = (HttpURLConnection) new URL(newUrl).openConnection();
+                    conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                    conn.setConnectTimeout(30000);
+                    conn.setReadTimeout(120000);
+                    status = conn.getResponseCode();
+                }
 
-                int exitCode = process.waitFor();
+                if (status != 200) {
+                    throw new Exception("HTTP " + status + " pour " + downloadUrl);
+                }
+
+                // Ecrire le fichier
+                try (InputStream in = conn.getInputStream()) {
+                    Files.copy(in, Paths.get(tempPath), StandardCopyOption.REPLACE_EXISTING);
+                }
+                conn.disconnect();
+
                 File fichier = new File(tempPath);
-
-                if (exitCode != 0 || !fichier.exists() || fichier.length() < 1000) {
-                    throw new Exception("Echec telechargement (code " + exitCode + ")\n"
-                            + "Taille: " + (fichier.exists() ? fichier.length() : 0) + " bytes\n"
-                            + output.toString().substring(0, Math.min(output.length(), 300)));
+                if (!fichier.exists() || fichier.length() < 100000) {
+                    throw new Exception("Fichier invalide : " + fichier.length() + " bytes");
                 }
 
                 // Lancer l'installateur et fermer l'app
