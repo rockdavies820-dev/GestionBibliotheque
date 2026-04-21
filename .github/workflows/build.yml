@@ -5,13 +5,25 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'liberica'
           java-package: 'jdk+fx'
+
+      - name: Lire la version
+        id: version
+        shell: pwsh
+        run: |
+          $v = Get-Content version.txt -Raw
+          $v = $v.Trim()
+          echo "VERSION=$v" >> $env:GITHUB_OUTPUT
+
       - name: Build Windows Installer
         shell: pwsh
         run: |
@@ -47,7 +59,6 @@ jobs:
             exit 1
           }
 
-          # Copier les deux icones dans out (favicon.png sera dans le JAR pour JavaFX)
           Copy-Item src/favicon.ico out/favicon.ico
           Copy-Item src/favicon.png out/favicon.png
 
@@ -62,11 +73,27 @@ jobs:
           $jmodsPath = "$javaHome\jmods"
           jlink --module-path "$jmodsPath" --add-modules java.base,java.desktop,java.logging,java.sql,java.naming,java.xml,javafx.controls,javafx.fxml --output runtime-image --strip-debug --compress 2 --no-header-files --no-man-pages
 
-          # jpackage utilise favicon.ico (requis par Windows pour l'icone exe/installateur)
           jpackage --input dist --name GestionBibliotheque --main-jar GestionBibliotheque.jar --type exe --runtime-image runtime-image --win-dir-chooser --win-shortcut --icon src/favicon.ico --java-options "-Dfile.encoding=UTF-8" --dest installer
 
-      - name: Upload installer
+          # Renommer l'installateur avec le numero de version
+          $version = Get-Content version.txt -Raw
+          $version = $version.Trim()
+          $exePath = Get-ChildItem installer -Filter "*.exe" | Select-Object -First 1 -ExpandProperty FullName
+          Rename-Item $exePath "GestionBibliotheque-$version.exe"
+          Write-Host "=== Installateur renomme : GestionBibliotheque-$version.exe ==="
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-installer
           path: installer/
+
+      - name: Creer GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: Version ${{ steps.version.outputs.VERSION }}
+          body: |
+            Release automatique de la version ${{ steps.version.outputs.VERSION }}
+          files: installer/GestionBibliotheque-${{ steps.version.outputs.VERSION }}.exe
+          token: ${{ secrets.GITHUB_TOKEN }}

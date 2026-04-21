@@ -1,5 +1,4 @@
 package views;
-
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -12,23 +11,22 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 public class FenetreMenuBibliothecaire {
-
     public void afficher(Stage stage) {
-        stage.setTitle("Menu Bibliothécaire - Gestion Bibliothèque");
+        stage.setTitle("Menu Bibliothecaire - Gestion Bibliotheque");
 
-        Text titre = new Text("Menu Bibliothécaire");
+        Text titre = new Text("Menu Bibliothecaire");
         titre.setFont(Font.font("Arial", FontWeight.BOLD, 22));
-        titre.setFill(Color.DARKGREEN);
+        titre.setFill(Color.DARKBLUE);
 
-        Text role = new Text("Connecté en tant que : Bibliothécaire");
+        Text role = new Text("Connecte en tant que : Bibliothecaire");
         role.setFont(Font.font("Arial", 12));
         role.setFill(Color.GRAY);
 
-        Button btnEmprunt  = new Button("Gérer les Emprunts");
-        Button btnRequetes = new Button("Faire des Requêtes");
+        Button btnEmprunt  = new Button("Gerer les Emprunts");
+        Button btnRequetes = new Button("Faire des Requetes");
         Button btnQuitter  = new Button("Quitter");
 
-        String style = "-fx-min-width: 220px; -fx-background-color: darkgreen; -fx-text-fill: white;";
+        String style = "-fx-min-width: 220px; -fx-background-color: darkblue; -fx-text-fill: white;";
         btnEmprunt.setStyle(style);
         btnRequetes.setStyle(style);
         btnQuitter.setStyle("-fx-min-width: 220px; -fx-background-color: red; -fx-text-fill: white;");

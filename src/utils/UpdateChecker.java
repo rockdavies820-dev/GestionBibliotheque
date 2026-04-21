@@ -1,43 +1,36 @@
 package utils;
-
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
-
 import java.io.*;
 import java.net.*;
 import java.nio.file.*;
 
 public class UpdateChecker {
-
-    private static final String VERSION_ACTUELLE = "1.0.0";
+    private static final String VERSION_ACTUELLE = "1.1.0";
     private static final String VERSION_URL = "https://raw.githubusercontent.com/rockdavies820-dev/GestionBibliotheque/main/version.txt";
-    private static final String DOWNLOAD_URL = "https://github.com/rockdavies820-dev/GestionBibliotheque/releases/latest/download/GestionBibliotheque-1.0.0.exe";
 
     public static void verifier() {
         new Thread(() -> {
             try {
-                // Lire la version en ligne
                 URL url = new URL(VERSION_URL);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
                 String versionEnLigne = reader.readLine().trim();
                 reader.close();
-
                 if (!versionEnLigne.equals(VERSION_ACTUELLE)) {
                     Platform.runLater(() -> afficherPopup(versionEnLigne));
                 }
             } catch (Exception e) {
-                System.out.println("Vérification mise à jour échouée : " + e.getMessage());
+                System.out.println("Verification mise a jour echouee : " + e.getMessage());
             }
         }).start();
     }
 
     private static void afficherPopup(String nouvelleVersion) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Mise à jour disponible");
+        alert.setTitle("Mise a jour disponible");
         alert.setHeaderText("Version " + nouvelleVersion + " disponible !");
-        alert.setContentText("Voulez-vous mettre à jour maintenant ?");
-
+        alert.setContentText("Voulez-vous mettre a jour maintenant ?");
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 telechargerEtInstaller(nouvelleVersion);
@@ -48,16 +41,15 @@ public class UpdateChecker {
     private static void telechargerEtInstaller(String version) {
         new Thread(() -> {
             try {
-                // Afficher progression
                 Platform.runLater(() -> {
                     Alert info = new Alert(Alert.AlertType.INFORMATION);
-                    info.setTitle("Téléchargement");
-                    info.setHeaderText("Téléchargement en cours...");
+                    info.setTitle("Telechargement");
+                    info.setHeaderText("Telechargement en cours...");
                     info.setContentText("Veuillez patienter.");
                     info.show();
                 });
 
-                // Télécharger le nouvel installateur
+                // URL dynamique basee sur la version recue
                 String downloadUrl = "https://github.com/rockdavies820-dev/GestionBibliotheque/releases/latest/download/GestionBibliotheque-" + version + ".exe";
                 String tempPath = System.getProperty("java.io.tmpdir") + "GestionBibliotheque_update.exe";
 
@@ -74,7 +66,7 @@ public class UpdateChecker {
                 Platform.runLater(() -> {
                     Alert erreur = new Alert(Alert.AlertType.ERROR);
                     erreur.setTitle("Erreur");
-                    erreur.setContentText("Téléchargement échoué : " + e.getMessage());
+                    erreur.setContentText("Telechargement echoue : " + e.getMessage());
                     erreur.show();
                 });
             }
