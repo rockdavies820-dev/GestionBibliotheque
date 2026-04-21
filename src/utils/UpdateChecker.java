@@ -7,7 +7,7 @@ import java.net.*;
 import java.nio.file.*;
 
 public class UpdateChecker {
-    private static final String VERSION_ACTUELLE = "1.3.0";
+    private static final String VERSION_ACTUELLE = "1.4.0";
     private static final String VERSION_URL = "https://raw.githubusercontent.com/rockdavies820-dev/GestionBibliotheque/main/version.txt";
 
     public static void verifier() {
@@ -15,7 +15,7 @@ public class UpdateChecker {
             try {
                 URL url = new URL(VERSION_URL);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
                 conn.setConnectTimeout(5000);
                 conn.setReadTimeout(5000);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -53,35 +53,37 @@ public class UpdateChecker {
                     info.show();
                 });
 
+                String tempPath = System.getenv("TEMP") + "\\GestionBibliotheque_update.exe";
                 String downloadUrl = "https://github.com/rockdavies820-dev/GestionBibliotheque/releases/download/v"
                         + version + "/GestionBibliotheque-" + version + ".exe";
 
-                String tempPath = System.getenv("TEMP") + "\\GestionBibliotheque_update.exe";
+                // Suivre toutes les redirections manuellement avec headers complets
+                String currentUrl = downloadUrl;
+                HttpURLConnection conn = null;
+                int maxRedirects = 10;
 
-                // Telecharger via Java natif avec suivi des redirections
-                HttpURLConnection conn = (HttpURLConnection) new URL(downloadUrl).openConnection();
-                conn.setRequestProperty("User-Agent", "Mozilla/5.0");
-                conn.setInstanceFollowRedirects(true);
-                conn.setConnectTimeout(30000);
-                conn.setReadTimeout(120000);
-
-                // Suivre manuellement les redirections (GitHub en a plusieurs)
-                int status = conn.getResponseCode();
-                while (status == HttpURLConnection.HTTP_MOVED_TEMP
-                        || status == HttpURLConnection.HTTP_MOVED_PERM
-                        || status == 303) {
-                    String newUrl = conn.getHeaderField("Location");
-                    conn.disconnect();
-                    conn = (HttpURLConnection) new URL(newUrl).openConnection();
-                    conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                for (int i = 0; i < maxRedirects; i++) {
+                    conn = (HttpURLConnection) new URL(currentUrl).openConnection();
+                    conn.setInstanceFollowRedirects(false);
+                    conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+                    conn.setRequestProperty("Accept", "application/octet-stream,*/*");
+                    conn.setRequestProperty("Accept-Language", "en-US,en;q=0.9");
                     conn.setConnectTimeout(30000);
                     conn.setReadTimeout(120000);
-                    status = conn.getResponseCode();
+
+                    int status = conn.getResponseCode();
+
+                    if (status == 200) {
+                        break; // On a le bon fichier
+                    } else if (status == 301 || status == 302 || status == 303 || status == 307 || status == 308) {
+                        currentUrl = conn.getHeaderField("Location");
+                        conn.disconnect();
+                    } else {
+                        throw new Exception("HTTP " + status + " pour " + currentUrl);
+                    }
                 }
 
-                if (status != 200) {
-                    throw new Exception("HTTP " + status + " pour " + downloadUrl);
-                }
+                if (conn == null) throw new Exception("Trop de redirections");
 
                 // Ecrire le fichier
                 try (InputStream in = conn.getInputStream()) {
