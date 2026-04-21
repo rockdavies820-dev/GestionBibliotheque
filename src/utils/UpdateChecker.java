@@ -4,7 +4,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import java.io.*;
 import java.net.*;
-import java.nio.file.*;
 
 public class UpdateChecker {
     private static final String VERSION_ACTUELLE = "1.1.0";
@@ -49,24 +48,46 @@ public class UpdateChecker {
                     info.show();
                 });
 
-                // URL dynamique basee sur la version recue
-                String downloadUrl = "https://github.com/rockdavies820-dev/GestionBibliotheque/releases/latest/download/GestionBibliotheque-" + version + ".exe";
-                String tempPath = System.getProperty("java.io.tmpdir") + "GestionBibliotheque_update.exe";
+                String downloadUrl = "https://github.com/rockdavies820-dev/GestionBibliotheque/releases/download/v"
+                        + version + "/GestionBibliotheque-" + version + ".exe";
 
-                URL url = new URL(downloadUrl);
-                try (InputStream in = url.openStream()) {
-                    Files.copy(in, Paths.get(tempPath), StandardCopyOption.REPLACE_EXISTING);
+                // Utiliser le dossier TEMP de Windows — toujours accessible
+                String tempPath = System.getenv("TEMP") + "\\GestionBibliotheque_update.exe";
+
+                ProcessBuilder pb = new ProcessBuilder(
+                        "C:\\Windows\\System32\\curl.exe",
+                        "-L",
+                        "-A", "Mozilla/5.0",
+                        "-o", tempPath,
+                        downloadUrl
+                );
+                pb.redirectErrorStream(true);
+                Process process = pb.start();
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                StringBuilder output = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) output.append(line).append("\n");
+
+                int exitCode = process.waitFor();
+                File fichier = new File(tempPath);
+
+                if (exitCode != 0 || !fichier.exists() || fichier.length() < 1000) {
+                    throw new Exception("Echec telechargement (code " + exitCode + ")\n"
+                            + "Taille: " + (fichier.exists() ? fichier.length() : 0) + " bytes\n"
+                            + output.toString().substring(0, Math.min(output.length(), 300)));
                 }
 
                 // Lancer l'installateur et fermer l'app
-                Runtime.getRuntime().exec(tempPath);
+                new ProcessBuilder(tempPath).start();
+                Thread.sleep(2000);
                 Platform.exit();
 
             } catch (Exception e) {
                 Platform.runLater(() -> {
                     Alert erreur = new Alert(Alert.AlertType.ERROR);
-                    erreur.setTitle("Erreur");
-                    erreur.setContentText("Telechargement echoue : " + e.getMessage());
+                    erreur.setTitle("Erreur mise a jour");
+                    erreur.setContentText(e.getMessage());
                     erreur.show();
                 });
             }
