@@ -2,14 +2,10 @@ import javafx.application.Application;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import views.FenetreConnexion;
-import utils.UpdateChecker;
 
 public class MainApp extends Application {
     @Override
     public void start(Stage primaryStage) {
-        // Verifier les mises a jour
-        UpdateChecker.verifier();
-
         // Icone depuis les ressources (PNG requis par JavaFX)
         try {
             Image icon = new Image(MainApp.class.getResourceAsStream("/favicon.png"));
