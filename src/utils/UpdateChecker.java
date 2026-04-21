@@ -7,7 +7,7 @@ import java.net.*;
 import java.nio.file.*;
 
 public class UpdateChecker {
-    private static final String VERSION_ACTUELLE = "1.0.0";
+    private static final String VERSION_ACTUELLE = "1.1.0";
     private static final String VERSION_URL = "https://raw.githubusercontent.com/rockdavies820-dev/GestionBibliotheque/main/version.txt";
 
     public static void verifier() {
